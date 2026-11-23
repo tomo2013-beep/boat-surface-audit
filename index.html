@@ -249,27 +249,40 @@ q('copyBefore156').onclick=async()=>{refresh();if(!target){msg.textContent='先�
 const labels={air:'気温 ℃',water:'水温 ℃',siteSpeed:'風速 m/s',wave:'波高 cm',siteDir:'風向'};
 function extract(doc){
  const body=doc.body;if(!body)throw Error('HTML本文がありません');
- // Keep the visible table and its heading together; avoid numbers from unrelated race sections.
+ const compact=e=>(e.textContent||'').replace(/[\u00a0\u3000]/g,' ').replace(/\s+/g,' ').trim();
  const sections=[...doc.querySelectorAll('table,section,article,div')].filter(e=>e.textContent&&e.textContent.includes('水面気象情報')&&e.textContent.length<5000);
- const compact=e=>(e.innerText||e.textContent||'').replace(/[\u00a0\u3000]/g,' ').replace(/\s+/g,' ').trim();
- const full=compact(body);const anchor=full.indexOf('水面気象情報');if(anchor<0)throw Error('水面気象情報の見出しが見つかりません');
+ const full=compact(body),anchor=full.indexOf('水面気象情報');if(anchor<0)throw Error('水面気象情報の見出しが見つかりません');
  const container=sections.sort((a,b)=>a.textContent.length-b.textContent.length)[0];
- const source=container?compact(container):full.slice(anchor,anchor+700);
- const pos=source.indexOf('水面気象情報');const snippet=source.slice(Math.max(0,pos),Math.max(0,pos)+900);
+ const source=container?compact(container):full.slice(anchor,anchor+900);
+ const pos=source.indexOf('水面気象情報'),snippet=source.slice(Math.max(0,pos),Math.max(0,pos)+900);
  const patterns={air:/気温\s*[:：]?\s*(-?\d+(?:\.\d+)?)\s*(?:℃|°C)/i,water:/水温\s*[:：]?\s*(-?\d+(?:\.\d+)?)\s*(?:℃|°C)/i,siteSpeed:/風速\s*[:：]?\s*(\d+(?:\.\d+)?)\s*(?:m\s*\/\s*s|ｍ\/ｓ|m)(?![a-z])/i,wave:/波高\s*[:：]?\s*(\d+(?:\.\d+)?)\s*(?:cm|㎝)/i};
  const values={};for(const [id,re] of Object.entries(patterns)){const m=snippet.match(re);if(m)values[id]=m[1]}
- const directions=['北北東','東北東','東南東','南南東','南南西','西南西','西北西','北北西','北東','南東','南西','北西','北','東','南','西'];
  const wind=snippet.match(/風向\s*[:：]?\s*(北北東|東北東|東南東|南南東|南南西|西南西|西北西|北北西|北東|南東|南西|北西|北|東|南|西)(?![\p{Script=Han}])/u);
- if(wind&&directions.includes(wind[1]))values.siteDir=wind[1];
- const timeMatch=snippet.match(/(?:観測(?:日時|時刻)|測定(?:日時|時刻))\s*[:：]?\s*(\d{1,2}[:：]\d{2})/)||snippet.match(/(?:水面気象情報\s*)?(\d{1,2}[:：]\d{2})\s*現在/);
- return {values,snippet:snippet.slice(0,700),time_label:timeMatch?.[1]||null,source_scope:container?'水面気象情報を含むHTML要素':'見出し直後の本文',wind_found:!!wind};
+ if(wind)values.siteDir=wind[1];
+ const evidence=[];
+ // Only explicitly labeled observation times qualify as possible observation times.
+ const labeled=/(観測日時|観測時刻|測定日時|測定時刻)\s*[:：]?\s*((?:[01]?\d|2[0-3])[:：][0-5]\d)/g;
+ for(const m of snippet.matchAll(labeled)){evidence.push({time:m[2].replace('：',':'),kind:'観測・測定時刻と明示',context:snippet.slice(Math.max(0,m.index-48),Math.min(snippet.length,m.index+m[0].length+72))});}
+ // '現在' can indicate the time of a displayed weather panel, but is not proof of observation time.
+ const current=/(?:^|\s)((?:[01]?\d|2[0-3])[:：][0-5]\d)\s*現在/g;
+ for(const m of snippet.matchAll(current)){evidence.push({time:m[1].replace('：',':'),kind:'「現在」の表示（観測時刻未確定）',context:snippet.slice(Math.max(0,m.index-48),Math.min(snippet.length,m.index+m[0].length+72))});}
+ // Collect other clock-like strings as warnings, not as observation times.
+ const clocks=[...snippet.matchAll(/(?:[01]?\d|2[0-3])[:：][0-5]\d/g)].slice(0,12);
+ for(const m of clocks){const t=m[0].replace('：',':');if(!evidence.some(e=>e.time===t&&e.context.includes(m[0])))evidence.push({time:t,kind:'用途不明の時刻',context:snippet.slice(Math.max(0,m.index-48),Math.min(snippet.length,m.index+m[0].length+72))});}
+ const explicit=evidence.filter(e=>e.kind==='観測・測定時刻と明示');
+ const unambiguous=explicit.length===1?explicit[0]:null;
+ return {values,snippet:snippet.slice(0,700),time_label:unambiguous?.time||null,time_evidence:evidence,time_quality:unambiguous?'explicit':'unverified',source_scope:container?'水面気象情報を含むHTML要素':'見出し直後の本文',wind_found:!!wind};
 }
 q('fetchBefore156').onclick=async()=>{refresh();candidates=null;q('applyBefore156').disabled=true;q('fetchCandidates156').replaceChildren();q('fetchRaw156').textContent='';q('candidateVerified158').value='';q('candidateDate158').value='';updateAudit158();if(!target){msg.textContent='先にレースURLを解析してください。';return;}let worker;try{worker=new URL(q('weatherWorker156').value.trim());if(worker.protocol!=='https:')throw Error('HTTPSのWorker URLが必要です');if(!worker.hostname.endsWith('.workers.dev'))throw Error('Cloudflare WorkersのURLを指定してください');localStorage.setItem(workerKey,worker.href);}catch(e){msg.textContent='Worker URLを確認してください：'+e.message;return;}
 worker.searchParams.set('url',target);msg.textContent='公式直前情報を取得しています…';try{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);let response;try{response=await fetch(worker.href,{signal:controller.signal,cache:'no-store'});}finally{clearTimeout(timer)}if(!response.ok)throw Error('WorkerからHTTP '+response.status);const html=await response.text();if(html.length>1500000)throw Error('HTMLが大きすぎます');const doc=new DOMParser().parseFromString(html,'text/html');const extracted=extract(doc);q('fetchRaw156').textContent=extracted.snippet;candidates={...extracted,source:target};
- const box=q('fetchCandidates156');const table=document.createElement('div');table.className='grid';for(const [id,label] of Object.entries(labels)){const div=document.createElement('div');div.className='notice';div.textContent=label+'：'+(extracted.values[id]??'取得できず');table.appendChild(div)}box.appendChild(table);const p=document.createElement('p');p.textContent='観測時刻の明示：'+(extracted.time_label||'未確認')+'。日付・締切前公開・対象レースの一致は別途確認してください。抽出範囲：'+extracted.source_scope;box.appendChild(p);q('applyBefore156').disabled=!Object.keys(extracted.values).length;updateAudit158();msg.textContent='候補を取得しました。元の公式ページで場・日付・R・数値を照合してください。風向は文字表記がある場合だけ候補にします。矢印画像の方向・観測日時・安定板は推測しません。';
+ const box=q('fetchCandidates156');const table=document.createElement('div');table.className='grid';for(const [id,label] of Object.entries(labels)){const div=document.createElement('div');div.className='notice';div.textContent=label+'：'+(extracted.values[id]??'取得できず');table.appendChild(div)}box.appendChild(table);const p=document.createElement('p');p.textContent='観測時刻の明示：'+(extracted.time_label||'未確認')+'。日付・締切前公開・対象レースの一致は別途確認してください。抽出範囲：'+extracted.source_scope;box.appendChild(p);
+ const ev=document.createElement('div');ev.className='notice';ev.style.whiteSpace='pre-wrap';ev.textContent='【時刻の出典・前後の文章】\n'+(extracted.time_evidence.length?extracted.time_evidence.map((e,i)=>(i+1)+'. '+e.time+'｜'+e.kind+'\n原文：'+e.context).join('\n\n'):'時刻表記が見つかりません');box.appendChild(ev);
+ const warning=document.createElement('div');warning.className='notice';warning.textContent=extracted.time_quality==='explicit'?'観測時刻と明示された候補が1件あります。ただし対象レース・観測日・公開時刻は未検証です。':'観測時刻と明示された一意の候補がありません。「現在」や用途不明の時刻は観測時刻として転記しません。';box.appendChild(warning);
+ q('applyBefore156').disabled=true;updateAudit158();msg.textContent='候補を取得しました。元の公式ページで場・日付・R・数値を照合してください。風向は文字表記がある場合だけ候補にします。矢印画像の方向・観測日時・安定板は推測しません。';
 }catch(e){msg.textContent='取得できませんでした：'+e.message+'。Workerの設置・URLと公式ページの公開状況を確認してください。';}};
 function assess158(){
  if(!candidates)return {ok:false,reason:'候補が未取得です'};
+ if(candidates.time_quality!=='explicit')return {ok:false,reason:'観測時刻と明示された一意の時刻がありません。原文を確認し、必要なら手入力してください'};
  const time=candidates.time_label?.replace('：',':');
  if(!time)return {ok:false,reason:'観測時刻を抽出できません'};
  if(q('candidateVerified158').value!=='yes')return {ok:false,reason:'公式ページで観測日・場・Rを確認してください'};
@@ -292,7 +305,7 @@ function updateAudit158(){
 q('applyBefore156').onclick=()=>{if(!candidates)return;const audit=assess158();if(!audit.ok){msg.textContent='転記を停止しました：'+audit.reason;return;}if(!confirm('公式ページで数値と対象レースを目視確認しましたか？ 未入力欄にのみ反映します。'))return;let n=0;for(const [id,value] of Object.entries(candidates.values)){if(q(id)&&q(id).value.trim()===''){q(id).value=value;n++;}}if(!q('siteTime').value.trim())q('siteTime').value=audit.time;if(!q('siteSource').value.trim())q('siteSource').value=candidates.source;msg.textContent=n+'件を空欄へ転記しました。出典URLも空欄の場合のみ設定しました。風向の矢印画像・観測日時・締切前公開・安定板の確認は別途必要です。';};
 })();
 </script>
-<script>/* v1.5.8 release identifier; preserve earlier JSON fields */
-(()=>{const badge=document.querySelector('header .tag');if(badge)badge.textContent='v1.5.8';})();
+<script>/* v1.5.9 release identifier; preserve earlier JSON fields */
+(()=>{const badge=document.querySelector('header .tag');if(badge)badge.textContent='v1.5.9';})();
 </script>
 </body></html>
