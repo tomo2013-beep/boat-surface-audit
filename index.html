@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>競艇・気象・水面統合監査 v1.6.9</title><style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark}body{margin:0;background:#0c1525;color:#e9f1ff}header{padding:20px;background:#162b48;border-bottom:1px solid #456}main{max-width:1050px;margin:auto;padding:16px}.card{background:#17273d;border:1px solid #344e70;border-radius:12px;padding:16px;margin:14px 0}h1{font-size:1.35rem;margin:0}h2{font-size:1.1rem;margin:0 0 14px}label{display:block;font-size:.86rem;margin:10px 0 5px;color:#c6d9f5}input,select,textarea{box-sizing:border-box;width:100%;background:#0c1a2e;border:1px solid #57739b;color:white;padding:11px;border-radius:8px;font:inherit}textarea{min-height:90px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}button{background:#1671c6;border:0;color:white;padding:11px 15px;border-radius:8px;font-weight:700;cursor:pointer;margin:4px 4px 4px 0}button.secondary{background:#425b79}.notice{border-left:4px solid #e4aa47;background:#3d3326;padding:10px;margin:10px 0}.ok{color:#79e0b0}.bad{color:#ffc078}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091423;padding:12px;border-radius:8px}small{color:#b6c7df}.result{font-size:1.08rem;line-height:1.8}.tag{display:inline-block;padding:2px 7px;border:1px solid #617da4;border-radius:6px;font-size:.8rem}</style></head><body><header><h1>🌦️ 競艇・気象・水面統合監査アプリ <span class="tag">v1.6.9</span></h1><small>公式場内観測 × 周辺気象観測｜推測値は自動補完しません</small></header><main><section class="card"><h2>① 対象レース</h2><label>BOAT RACE公式出走表URL</label><input id="url" placeholder=""><button id="parse">URL解析</button><div id="race" class="notice">URLを入力して「URL解析」を押してください。</div><div class="grid"><div><label>レース締切日時（日本時間・任意）</label><input type="datetime-local" id="deadline"></div><div><label>水面方位・向かい風判定の根拠（任意）</label><input id="orientation" placeholder="例：公式水面図で確認した方位"></div></div></section><section class="card" id="venueReference"><h2>🏟️ 競艇場の公式データ・水面方位</h2><div class="notice">場コードからBOAT RACE公式の競艇場データを開けます。公式水面図の北方向・スタート方向は目視確認が必要です。方位の推測値を自動登録しません。</div><div id="venueInfo" class="result">レースURLを解析してください。</div><button id="openStadium" type="button">公式競艇場データを開く</button><button id="setStadiumSource" type="button" class="secondary">水面図の根拠URLに設定</button><div class="grid"><div><label>競艇場メモ（水質・干満差・水面特性など）</label><textarea id="venueMemo" placeholder="公式ページで確認した内容と確認日を記録"></textarea></div><div><label>競艇場データの確認状況</label><select id="venueStatus"><option value="">未確認</option><option value="checked">公式ページを目視確認</option><option value="partial">一部のみ確認</option></select></div></div><button id="saveVenue" type="button">この競艇場の確認データを保存</button><button id="loadVenue" type="button" class="secondary">保存済み競艇場データを読み込む</button><div id="venueMessage" class="notice">競艇場データはブラウザ内に保存します。別端末には自動同期されません。</div></section>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>競艇・気象・水面統合監査 v1.7.0</title><style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark}body{margin:0;background:#0c1525;color:#e9f1ff}header{padding:20px;background:#162b48;border-bottom:1px solid #456}main{max-width:1050px;margin:auto;padding:16px}.card{background:#17273d;border:1px solid #344e70;border-radius:12px;padding:16px;margin:14px 0}h1{font-size:1.35rem;margin:0}h2{font-size:1.1rem;margin:0 0 14px}label{display:block;font-size:.86rem;margin:10px 0 5px;color:#c6d9f5}input,select,textarea{box-sizing:border-box;width:100%;background:#0c1a2e;border:1px solid #57739b;color:white;padding:11px;border-radius:8px;font:inherit}textarea{min-height:90px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}button{background:#1671c6;border:0;color:white;padding:11px 15px;border-radius:8px;font-weight:700;cursor:pointer;margin:4px 4px 4px 0}button.secondary{background:#425b79}.notice{border-left:4px solid #e4aa47;background:#3d3326;padding:10px;margin:10px 0}.ok{color:#79e0b0}.bad{color:#ffc078}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091423;padding:12px;border-radius:8px}small{color:#b6c7df}.result{font-size:1.08rem;line-height:1.8}.tag{display:inline-block;padding:2px 7px;border:1px solid #617da4;border-radius:6px;font-size:.8rem}</style></head><body><header><h1>🌦️ 競艇・気象・水面統合監査アプリ <span class="tag">v1.7.0</span></h1><small>公式場内観測 × 周辺気象観測｜推測値は自動補完しません</small></header><main><section class="card"><h2>① 対象レース</h2><label>BOAT RACE公式出走表URL</label><input id="url" placeholder=""><button id="parse">URL解析</button><div id="race" class="notice">URLを入力して「URL解析」を押してください。</div><div class="grid"><div><label>レース締切日時（日本時間・任意）</label><input type="datetime-local" id="deadline"></div><div><label>水面方位・向かい風判定の根拠（任意）</label><input id="orientation" placeholder="例：公式水面図で確認した方位"></div></div></section><section class="card" id="venueReference"><h2>🏟️ 競艇場の公式データ・水面方位</h2><div class="notice">場コードからBOAT RACE公式の競艇場データを開けます。公式水面図の北方向・スタート方向は目視確認が必要です。方位の推測値を自動登録しません。</div><div id="venueInfo" class="result">レースURLを解析してください。</div><button id="openStadium" type="button">公式競艇場データを開く</button><button id="setStadiumSource" type="button" class="secondary">水面図の根拠URLに設定</button><div class="grid"><div><label>競艇場メモ（水質・干満差・水面特性など）</label><textarea id="venueMemo" placeholder="公式ページで確認した内容と確認日を記録"></textarea></div><div><label>競艇場データの確認状況</label><select id="venueStatus"><option value="">未確認</option><option value="checked">公式ページを目視確認</option><option value="partial">一部のみ確認</option></select></div></div><button id="saveVenue" type="button">この競艇場の確認データを保存</button><button id="loadVenue" type="button" class="secondary">保存済み競艇場データを読み込む</button><div id="venueMessage" class="notice">競艇場データはブラウザ内に保存します。別端末には自動同期されません。</div></section>
 <section class="card" id="officialFetch156"><h2>📡 公式直前情報の取得・入力補助（v1.5.8）</h2>
 <div class="notice">BOAT RACE公式の直前情報ページから、文字で確認できる観測値だけを候補として抽出します。風向矢印・正確な観測時刻・締切前公開の証明は自動確定しません。既存入力は勝手に上書きしません。</div>
 <div class="grid"><div><label>気象専用Worker URL</label><input id="weatherWorker156" type="url" placeholder="https://あなたのWorker名.workers.dev/"></div><div><label>公式直前情報URL（レースURL解析後に自動設定）</label><input id="beforeLink156" readonly></div></div>
@@ -456,6 +456,54 @@ if(typeof snapshot==='function'){
  };
 }
 refresh();
+})();
+</script>
+
+<script>
+/* v1.7.0: automatic race URL parsing and candidate retrieval. Never auto-apply unverified observations. */
+(()=>{'use strict';
+ const $=id=>document.getElementById(id);
+ const input=$('url'), parseButton=$('parse'), fetchButton=$('fetchBefore156'), worker=$('weatherWorker156');
+ const lastKey='boat_weather_last_race_url_v170';
+ const defaultWorker='https://boat-weather-relay.yuuki20130216.workers.dev/';
+ let timer=null, lastRequested='', seq=0;
+ const banner=document.createElement('div');banner.id='autoFetch170';banner.className='notice';
+ banner.setAttribute('role','status');banner.textContent='自動取得：待機中。公式出走表URLを貼り付けると自動解析します。';
+ input.parentNode.insertBefore(banner,parseButton);
+ if(!worker.value.trim()){
+   worker.value=defaultWorker;
+   try{localStorage.setItem('boat_weather_worker_v156',defaultWorker)}catch(e){}
+ }
+ function validUrl(value){try{
+   const u=new URL(value.trim());
+   if(u.protocol!=='https:'||u.hostname!=='www.boatrace.jp'||u.pathname!=='/owpc/pc/race/racelist')return false;
+   const hd=u.searchParams.get('hd')||'',jcd=u.searchParams.get('jcd')||'',rno=u.searchParams.get('rno')||'';
+   if(!/^\d{8}$/.test(hd)||!/^\d{1,2}$/.test(jcd)||!/^\d{1,2}$/.test(rno))return false;
+   return true;
+ }catch(e){return false}}
+ function run(force=false){
+   const value=input.value.trim();
+   if(!validUrl(value)){banner.textContent=value?'URLを入力中です。公式出走表URLが完成すると自動取得します。':'自動取得：URL待機中';return}
+   const current=++seq;
+   // Existing parser triggers other modules' parse click listeners and race-dependent reference refresh.
+   parseButton.click();
+   if(!window.race && !document.getElementById('race').textContent.includes('場コード')){banner.textContent='URL解析に失敗しました。入力内容を確認してください。';return}
+   try{localStorage.setItem(lastKey,value)}catch(e){}
+   if(!worker.value.trim()){banner.textContent='気象Worker URLが未設定のため自動取得できません。';return}
+   const requestKey=value+'|'+worker.value.trim();
+   if(!force&&requestKey===lastRequested){banner.textContent='このURLは取得を開始済みです。再取得する場合は下の手動取得ボタンを使ってください。';return}
+   lastRequested=requestKey;
+   banner.textContent='URL解析完了。公式直前情報を自動取得しています…（値は未照合候補）';
+   // Delay until other existing click listeners have refreshed the official beforeinfo URL.
+   setTimeout(()=>{if(current!==seq)return;fetchButton.click();banner.textContent='自動取得を実行しました。下の「公式直前情報の取得・入力補助」で結果と注意事項を確認してください。'},70);
+ }
+ input.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>run(),650)});
+ input.addEventListener('change',()=>{clearTimeout(timer);timer=setTimeout(()=>run(),150)});
+ // The existing URL解析 button continues to work, but also starts candidate retrieval.
+ parseButton.addEventListener('click',e=>{if(e.isTrusted){clearTimeout(timer);setTimeout(()=>run(),80)} });
+ if(!input.value.trim()){
+   try{const previous=localStorage.getItem(lastKey);if(previous&&validUrl(previous)){input.value=previous;banner.textContent='前回のURLを復元しました。自動取得を開始します。';setTimeout(()=>run(),250)}}catch(e){}
+ }else setTimeout(()=>run(),250);
 })();
 </script>
 </body></html>
